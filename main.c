@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ncurses.h>
+#include <string.h>
 
 # define MAX_LINES 1500
 # define X_MAX 159
@@ -11,6 +12,7 @@
 # define WATER ' '
 # define PLAYER 'P'
 # define VISITOR 'V'
+# define DRAGON 165 | A_ALTCHARSET
 # define POI_COUNT 17
 
 typedef struct s_poi
@@ -35,7 +37,7 @@ t_poi g_poi_tab[POI_COUNT] = {
     {109, 2, "Ruuhijärvi"},
     {145, 10, "Urja"},
     {106, 28, "Nuuksion Pitkäjärvi"},
-    {78, 9, "Nuuksion Pitkäjärvi"},
+    {85, 17, "Watch out! Dragon!"},
     {126, 42, "Nuuksion Pitkäjärvi"},
     {158, 39, "Pirttimäki"}
 };
@@ -146,10 +148,11 @@ void draw_info(WINDOW *win, int x, int y)
 {
     char xs[10];
     char ys[10];
-    char pname[25];
-    sprintf(pname, "%-20s", nearest_poi_name(x, y));
-    sprintf(xs, "x - %2d", x);
-    sprintf(ys, "y - %2d", y);
+    char pname[50];
+    bzero(pname, 50);
+    sprintf(pname, "%-49s", nearest_poi_name(x, y));
+    sprintf(xs, "x: %2d", x);
+    sprintf(ys, "y: %2d", y);
     box(win, ACS_VLINE, ACS_HLINE);
     wmove(win, 1, 1);
     waddstr(win, pname);
@@ -160,17 +163,11 @@ void draw_info(WINDOW *win, int x, int y)
     wrefresh(win);
 }
 
-int     main(void)
+int     main(int argc, char **argv)
 {
-    // char    line[MAX_LINES];
-    // char    *tmp;
+    int dragonx;
+    int dragony;
 
-    // while (fgets(line, MAX_LINES, stdin))
-    // {
-    //     tmp = strdup(line);
-    //     printf("Field n would be %s\n", getfield(tmp, 1));
-    //     free(tmp);
-    // }
     int px;
     int py;
     int exit = 0;
@@ -190,7 +187,11 @@ int     main(void)
     WINDOW *infowin = newwin(4, X_MAX + 1, Y_MAX + 1, 0);
     WINDOW *wel_win = newwin(32, 106, 10, 26);
     px = 39;
-    py = 39;    
+    py = 39;
+
+    dragonx = 85;
+    dragony = 17;
+
     while(!exit)
     {
         wmove(win, 1, 0);
@@ -198,6 +199,16 @@ int     main(void)
         box(win, ACS_VLINE, ACS_HLINE);
         draw_trees(win, 8000);
         draw_info(infowin, px, py);
+
+        start_color();
+	    init_pair(1, COLOR_RED, COLOR_BLACK);
+
+	    attron(COLOR_PAIR(1));
+
+        wmove(win, dragony, dragonx);
+        mvwdelch(win, dragony, dragony);
+        mvwinsch(win, dragony, dragonx, DRAGON);
+    	attroff(COLOR_PAIR(1));
 
         mvwdelch(win, py, px);
         mvwinsch(win, py, px, PLAYER);
@@ -214,7 +225,7 @@ int     main(void)
         }
 
 
-        
+
         switch (getchar())
         {
             case 'q':
